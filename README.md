@@ -6,7 +6,7 @@ and lands it in a columnar, BI-ready store (**Delta Lake**) using pipelines that
 are **incremental, idempotent, scheduled, and adaptable to any table without
 writing new code**.
 
-> **Stack:** Python 3.9+ · Delta Lake (delta-rs) · DuckDB · SQLAlchemy · pandas · Airflow · (optional) Spark
+> **Stack:** Python 3.10+ · Delta Lake (delta-rs) · DuckDB · SQLAlchemy · pandas · Airflow · (optional) Spark
 
 ---
 
@@ -180,7 +180,7 @@ See [docs/ETL_FRAMEWORK.md](docs/ETL_FRAMEWORK.md).
 decimal**, an incremental **lag window** that recovers late-arriving rows, and
 **CDC soft-delete** handling. All are covered by the test suite (30 tests).
 
-**Still needed for a hardened production deployment** :
+**Still needed for a hardened production deployment** (be honest about these):
 hard-delete detection without a source flag (needs periodic full reconciliation
 or log-based CDC); schema-drift contracts; chunked extraction reading from a
 **replica** rather than the OLTP primary; a run-audit/freshness table and
