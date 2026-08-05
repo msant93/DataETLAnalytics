@@ -12,3 +12,4 @@ transforms:
   - normalize_columns
   - trim_strings
   - add_ingested_at
+money_columns: [unit_cost]

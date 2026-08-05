@@ -7,6 +7,7 @@ source:
   table: transactions
 extract:
   incremental_cursor: updated_at
+  lag_seconds: 86400        # re-read 1 day behind the watermark (late data)
 target:
   table: transactions
   primary_key: txn_id
@@ -15,3 +16,8 @@ transforms:
   - normalize_columns
   - derive_line_totals    # <- example table-specific business logic
   - add_ingested_at
+money_columns: [amount]     # stored as exact decimal(18,2), not float
+quality:
+  not_null: [txn_id, updated_at]
+  positive: [amount, quantity]
+  on_fail: quarantine       # route bad rows to transactions__rejects, load the good ones

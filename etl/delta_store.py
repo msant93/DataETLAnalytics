@@ -44,19 +44,49 @@ def max_cursor(path: str, cursor: str) -> Any | None:
     return val
 
 
-def write(path: str, df: pd.DataFrame, *, mode: str, primary_key: str | None = None) -> int:
+def _cast_money(table: pa.Table, money_columns: list[str] | None) -> pa.Table:
+    """Cast declared money columns to fixed-precision decimal(18,2).
+
+    Storing money as float accumulates rounding error and won't reconcile to the
+    penny; decimal is exact. Done at the storage boundary so it also flows into
+    downstream SQL models (DuckDB does exact decimal arithmetic)."""
+    if not money_columns:
+        return table
+    for col in money_columns:
+        idx = table.schema.get_field_index(col)
+        if idx >= 0:
+            casted = table.column(idx).cast(pa.decimal128(18, 2), safe=False)
+            table = table.set_column(idx, col, casted)
+    return table
+
+
+def write(
+    path: str,
+    df: pd.DataFrame,
+    *,
+    mode: str,
+    primary_key: str | None = None,
+    money_columns: list[str] | None = None,
+) -> int:
     """
     Persist a DataFrame to a Delta table.
       mode="merge"     -> upsert on primary_key (idempotent)
       mode="overwrite" -> replace table contents (idempotent full refresh)
+      mode="append"    -> append rows (used for reject/audit tables)
+    Money columns are stored as exact decimal(18,2).
     Returns the row count of the incoming batch.
     """
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    table = pa.Table.from_pandas(df, preserve_index=False)
+    table = _cast_money(pa.Table.from_pandas(df, preserve_index=False), money_columns)
 
     if mode == "overwrite":
         write_deltalake(path, table, mode="overwrite", schema_mode="overwrite")
         logger.info("Delta overwrite %s (%d rows)", path, len(df))
+        return len(df)
+
+    if mode == "append":
+        write_deltalake(path, table, mode="append")
+        logger.info("Delta append %s (%d rows)", path, len(df))
         return len(df)
 
     if mode == "merge":
@@ -82,6 +112,27 @@ def write(path: str, df: pd.DataFrame, *, mode: str, primary_key: str | None = N
         return len(df)
 
     raise ValueError(f"Unknown write mode: {mode}")
+
+
+def delete_keys(path: str, primary_key: str, keys: list) -> int:
+    """Delete rows whose primary key is in `keys` (CDC delete handling).
+
+    Delta `DELETE` is ACID and the change is versioned in the transaction log.
+    Returns the number of keys requested for deletion (best-effort)."""
+    if not keys or not _exists(path):
+        return 0
+    dt = DeltaTable(path)
+    # Build a safe IN-list: quote strings, leave numbers bare.
+    literals = ", ".join(_sql_literal(k) for k in keys)
+    dt.delete(predicate=f"{primary_key} IN ({literals})")
+    logger.info("Delta delete %s (%d keys)", path, len(keys))
+    return len(keys)
+
+
+def _sql_literal(v) -> str:
+    if isinstance(v, (int, float)) and not isinstance(v, bool):
+        return str(v)
+    return "'" + str(v).replace("'", "''") + "'"
 
 
 def read_arrow(path: str) -> pa.Table:

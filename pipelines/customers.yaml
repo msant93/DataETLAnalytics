@@ -15,3 +15,7 @@ transforms:
   - normalize_columns
   - trim_strings
   - add_ingested_at
+quality:
+  not_null: [customer_id, updated_at]
+  unique: [customer_id]
+  on_fail: abort            # reject the whole batch if customers are malformed

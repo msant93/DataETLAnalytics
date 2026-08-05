@@ -140,20 +140,59 @@ The gold tables are Delta (Parquet). Point BI at them:
 - **Power BI / Tableau / Fabric:** native Delta/Parquet connectors, or via a query engine.
 - **Athena / Trino / Spark:** register the Delta location as an external table.
 
+## Real-data hardening (implemented)
+
+These address the failure modes that surface on real operational data:
+
+- **Data-quality gate (in the engine).** Declare per-pipeline rules; they run
+  *before* the load. `on_fail` chooses the behaviour:
+  ```yaml
+  quality:
+    not_null: [customer_id, updated_at]
+    unique:   [customer_id]     # the primary key is always enforced too
+    positive: [amount, quantity]
+    on_fail:  abort             # abort | warn | quarantine
+  ```
+  `quarantine` routes bad rows to a `<table>__rejects` Delta table and loads the
+  good ones; `abort` fails the batch; `warn` logs and loads.
+- **Money as exact decimal.** List money columns and they're stored as
+  `decimal(18,2)`, not float, so totals reconcile to the penny:
+  ```yaml
+  money_columns: [amount]
+  ```
+- **Late-arriving data (lag window).** `extract.lag_seconds` re-reads a window
+  behind the watermark each run; MERGE dedups, so late/out-of-order rows are
+  recovered instead of lost:
+  ```yaml
+  extract:
+    incremental_cursor: updated_at
+    lag_seconds: 86400          # re-read 1 day back
+  ```
+- **CDC soft-delete.** If the source flags deletes, name the column and the
+  engine removes those rows from the target (ACID Delta `DELETE`):
+  ```yaml
+  target:
+    soft_delete_column: is_deleted
+  ```
+
 ## Honest gaps (what a real engagement still needs)
 
-- **Deletes:** MERGE handles inserts/updates, not source hard-deletes. Add a
-  soft-delete flag, a `when_not_matched_by_source_delete` clause, or CDC.
-- **Schema evolution:** demo assumes stable schemas. delta-rs supports
-  `schema_mode="merge"`; wire it per-table where sources drift.
-- **Spark path is provided, not load-tested here** — validate on your cluster.
-- **Transforms are single-node (pandas)** in the default engine; the Spark engine
-  needs the equivalent transforms expressed as Spark DataFrame ops.
-- **Secrets/observability/orchestration hardening** follow your platform's
-  standards (Connections backend, metrics, alerting rules).
+- **Hard deletes without a flag** still need a periodic full reconciliation
+  (`when_not_matched_by_source_delete`) or log-based CDC (Debezium/GoldenGate);
+  the lag window and soft-delete cover the common cases, not a source row that
+  simply vanishes with no tombstone.
+- **Schema evolution:** stable schemas are assumed. delta-rs supports
+  `schema_mode="merge"`; wire it per-table where sources drift, plus a contract.
+- **Large-volume extraction** still materialises each batch in memory; add
+  chunked reads (`chunksize`) and read from a **replica**, not the OLTP primary.
+- **Spark path is provided, not load-tested here** — validate on your cluster,
+  and port the pandas transforms to Spark DataFrame ops for engine parity.
+- **Observability:** logging is structured, but add a run-audit table
+  (rows in/out, status, freshness) and alerting for unattended operation.
 
 ## Verified in this repo
-`pytest tests/test_etl.py` (8 tests) green: transforms, an acyclic graph ordering
+`pytest` (30 tests) green, `ruff` clean: transforms, an acyclic graph ordering
 the model last, a full 3-source run producing silver + gold Delta tables,
-idempotent re-runs, and incremental upsert (not append). The Delta output is
-Parquet + `_delta_log`, read back through DuckDB.
+idempotent re-runs, incremental upsert (not append), the quality gate
+(abort + quarantine), decimal money, the lag window recovering a late row, and
+CDC soft-delete. Delta output is Parquet + `_delta_log`, read back through DuckDB.

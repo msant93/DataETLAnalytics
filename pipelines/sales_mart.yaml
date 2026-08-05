@@ -4,6 +4,7 @@ name: sales_mart
 inputs: [customers, transactions, products]
 target:
   table: sales_mart
+  money_columns: [revenue, cost, gross_margin]
 sql: |
   SELECT
       t.txn_id,

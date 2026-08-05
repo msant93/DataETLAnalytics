@@ -173,15 +173,19 @@ See [docs/ETL_FRAMEWORK.md](docs/ETL_FRAMEWORK.md).
 
 ---
 
-## Known limitations (honest)
+## What's hardened vs. what still needs work
 
-This is a production-*shaped*, portfolio-grade framework, verified end to end on
-realistic stand-ins — not a battle-hardened product. Notably: the incremental
-watermark can miss late-arriving/out-of-order data and does not capture source
-deletes (full CDC is the fix); the quality gate currently lives in the batch demo
-rather than the framework engine; money is stored as float rather than decimal;
-and extraction materializes each batch in memory on one machine. See the gap
-analyses in [docs/ETL_FRAMEWORK.md](docs/ETL_FRAMEWORK.md) and
+**Implemented for real data:** a config-driven **quality gate** in the engine
+(abort / warn / quarantine bad rows before load), **money stored as exact
+decimal**, an incremental **lag window** that recovers late-arriving rows, and
+**CDC soft-delete** handling. All are covered by the test suite (30 tests).
+
+**Still needed for a hardened production deployment** (be honest about these):
+hard-delete detection without a source flag (needs periodic full reconciliation
+or log-based CDC); schema-drift contracts; chunked extraction reading from a
+**replica** rather than the OLTP primary; a run-audit/freshness table and
+alerting; and validating the Spark path on a real cluster. See the gap analyses
+in [docs/ETL_FRAMEWORK.md](docs/ETL_FRAMEWORK.md) and
 [docs/PRODUCTION.md](docs/PRODUCTION.md).
 
 ---

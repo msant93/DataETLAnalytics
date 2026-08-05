@@ -26,6 +26,8 @@ class IngestSpec:
     target: dict[str, Any]
     extract: dict[str, Any] = field(default_factory=dict)
     transforms: list[str] = field(default_factory=list)
+    quality: dict[str, Any] = field(default_factory=dict)
+    money_columns: list[str] = field(default_factory=list)
     kind: str = "ingest"
 
     @property
@@ -40,6 +42,16 @@ class IngestSpec:
     def cursor(self) -> str | None:
         return self.extract.get("incremental_cursor")
 
+    @property
+    def lag_seconds(self) -> int:
+        """Re-read this many seconds behind the watermark to catch late data."""
+        return int(self.extract.get("lag_seconds", 0))
+
+    @property
+    def soft_delete_column(self) -> str | None:
+        """Boolean source column marking rows to delete from the target (CDC)."""
+        return self.target.get("soft_delete_column")
+
 
 @dataclass(frozen=True)
 class ModelSpec:
@@ -48,6 +60,10 @@ class ModelSpec:
     sql: str
     target: dict[str, Any]
     kind: str = "model"
+
+    @property
+    def money_columns(self) -> list[str]:
+        return self.target.get("money_columns", [])
 
 
 def _load_yaml(path: Path) -> dict:
@@ -68,6 +84,8 @@ def load_specs(directory: Path | None = None) -> dict[str, IngestSpec | ModelSpe
                 target=doc["target"],
                 extract=doc.get("extract", {}),
                 transforms=doc.get("transforms", []),
+                quality=doc.get("quality", {}),
+                money_columns=doc.get("money_columns", []),
             )
         elif kind == "model":
             spec = ModelSpec(
