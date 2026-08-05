@@ -6,7 +6,7 @@ and lands it in a columnar, BI-ready store (**Delta Lake**) using pipelines that
 are **incremental, idempotent, scheduled, and adaptable to any table without
 writing new code**.
 
-> **Stack:** Python 3.10+ · Delta Lake (delta-rs) · DuckDB · SQLAlchemy · pandas · Airflow · (optional) Spark
+> **Stack:** Python 3.11+ · Delta Lake (delta-rs) · DuckDB · SQLAlchemy · pandas · Airflow · (optional) Spark
 
 ---
 

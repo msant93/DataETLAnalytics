@@ -7,7 +7,7 @@ PYTHON="${PYTHON:-python3}"
 VENV_DIR="env"
 
 echo "==> Checking Python version"
-"$PYTHON" -c 'import sys; assert sys.version_info >= (3,10), "Python 3.10+ required"'
+"$PYTHON" -c 'import sys; assert sys.version_info >= (3,11), "Python 3.11+ required"'
 
 echo "==> Creating virtual environment in ./$VENV_DIR"
 "$PYTHON" -m venv "$VENV_DIR"

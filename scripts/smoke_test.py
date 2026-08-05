@@ -36,8 +36,8 @@ def _version_tuple(v: str) -> tuple[int, ...]:
 
 
 def check_python() -> bool:
-    ok = sys.version_info >= (3, 10)
-    print(f"[{PASS if ok else FAIL}] Python {sys.version.split()[0]} (need >= 3.10)")
+    ok = sys.version_info >= (3, 11)
+    print(f"[{PASS if ok else FAIL}] Python {sys.version.split()[0]} (need >= 3.11)")
     return ok
 
 
