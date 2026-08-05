@@ -180,7 +180,7 @@ See [docs/ETL_FRAMEWORK.md](docs/ETL_FRAMEWORK.md).
 decimal**, an incremental **lag window** that recovers late-arriving rows, and
 **CDC soft-delete** handling. All are covered by the test suite (30 tests).
 
-**Still needed for a hardened production deployment** (be honest about these):
+**Still needed for a hardened production deployment** :
 hard-delete detection without a source flag (needs periodic full reconciliation
 or log-based CDC); schema-drift contracts; chunked extraction reading from a
 **replica** rather than the OLTP primary; a run-audit/freshness table and
