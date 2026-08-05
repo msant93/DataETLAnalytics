@@ -1,0 +1,14 @@
+# CSV export `products` -> silver Delta. Small dimension: full read, upsert on SKU.
+kind: ingest
+name: products
+source:
+  type: csv
+  path_env: PRODUCTS_PATH
+target:
+  table: products
+  primary_key: product_sku
+  write_mode: merge
+transforms:
+  - normalize_columns
+  - trim_strings
+  - add_ingested_at

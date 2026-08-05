@@ -1,0 +1,5 @@
+# dlt runtime configuration (committed intentionally).
+# Telemetry OFF: no anonymous usage data leaves the host. Required for most
+# corporate data-governance / no-surprise-egress policies.
+[runtime]
+dlt_telemetry = false

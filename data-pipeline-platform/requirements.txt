@@ -1,0 +1,30 @@
+# Pinned to versions verified working together (reproducible builds).
+# Regenerate with `pip freeze > requirements.txt` after an intentional upgrade.
+
+# Core pipeline
+dlt[duckdb,sql_database,parquet,filesystem]==1.29.1
+duckdb==1.5.5
+pandas==3.0.2
+sqlalchemy==2.0.51        # SQL sources (Postgres/MySQL/etc.)
+pyarrow==25.0.0           # Parquet columnar output
+deltalake==1.6.2          # Delta Lake columnar storage (Parquet + ACID log), no Spark needed
+
+# Source database drivers — uncomment the ones your client actually uses:
+# psycopg2-binary==2.9.9  # Postgres
+# pymysql==1.1.1          # MySQL
+# oracledb==2.4.1         # Oracle (thin mode: no Instant Client needed)
+
+# Orchestration (install on the Airflow host; pinned separately from this repo
+# because Airflow constrains SQLAlchemy/pandas versions):
+# apache-airflow==2.10.*
+
+# Scale-out engine (install on the Spark cluster only, not needed single-node):
+# pyspark==3.5.*
+# delta-spark==3.2.*
+
+# Config + notebooks
+pyyaml==6.0.3
+jupyter==1.1.1
+notebook==7.6.1
+nbconvert==7.17.1
+ipykernel==7.3.0

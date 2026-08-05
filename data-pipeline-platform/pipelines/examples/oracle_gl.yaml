@@ -1,0 +1,22 @@
+# Oracle general-ledger table -> silver Delta.
+# Real deployment: dsn = oracle+oracledb://user:pass@host:1521/?service_name=ORCLPDB1
+#   (pip install oracledb). Oracle stores identifiers UPPERCASE, so the source
+#   names are uppercase and `normalize_columns` lowercases them in silver.
+# Demo: ORACLE_DSN points at a SQLite stand-in (same SQLAlchemy code path).
+kind: ingest
+name: gl_entries
+source:
+  type: oracle
+  dsn_env: ORACLE_DSN
+  table: GL_ENTRIES
+  # schema: FINANCE          # optional -> qualifies as FINANCE.GL_ENTRIES
+extract:
+  incremental_cursor: LAST_MODIFIED
+target:
+  table: gl_entries
+  primary_key: entry_id
+  write_mode: merge
+transforms:
+  - normalize_columns        # UPPERCASE -> snake_case
+  - trim_strings
+  - add_ingested_at

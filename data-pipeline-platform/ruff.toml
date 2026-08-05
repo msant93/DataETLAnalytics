@@ -1,0 +1,13 @@
+# Pragmatic lint config: catch real problems, don't bikeshed line length.
+line-length = 100
+target-version = "py39"
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E501",  # line length handled by formatter, not worth failing CI over
+    "B008",  # dlt uses function calls in argument defaults by design
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["B011"]

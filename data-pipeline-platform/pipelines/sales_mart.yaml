@@ -1,0 +1,23 @@
+# Gold BI model: join the three silver tables into a report-ready mart.
+kind: model
+name: sales_mart
+inputs: [customers, transactions, products]
+target:
+  table: sales_mart
+sql: |
+  SELECT
+      t.txn_id,
+      CAST(t.txn_ts AS DATE)                        AS txn_date,
+      c.customer_id,
+      c.name                                        AS customer_name,
+      c.region,
+      p.product_sku,
+      p.product_name,
+      p.category,
+      t.quantity,
+      t.amount                                      AS revenue,
+      ROUND(p.unit_cost * t.quantity, 2)            AS cost,
+      ROUND(t.amount - p.unit_cost * t.quantity, 2) AS gross_margin
+  FROM transactions t
+  JOIN customers c USING (customer_id)
+  JOIN products  p USING (product_sku)

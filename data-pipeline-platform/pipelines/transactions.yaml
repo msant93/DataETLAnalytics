@@ -1,0 +1,17 @@
+# MySQL `transactions` table -> silver Delta. Incremental + upsert + custom transform.
+kind: ingest
+name: transactions
+source:
+  type: mysql             # real: mysql+pymysql://... ; demo: sqlite stand-in
+  dsn_env: SALES_DSN
+  table: transactions
+extract:
+  incremental_cursor: updated_at
+target:
+  table: transactions
+  primary_key: txn_id
+  write_mode: merge
+transforms:
+  - normalize_columns
+  - derive_line_totals    # <- example table-specific business logic
+  - add_ingested_at

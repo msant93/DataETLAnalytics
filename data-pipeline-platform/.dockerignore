@@ -1,0 +1,16 @@
+env/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+output/
+*.duckdb
+*.duckdb.wal
+.git/
+.github/
+tests/
+notebooks/
+*.md
+data/orders_source.csv

@@ -1,0 +1,17 @@
+# Postgres `customers` table -> silver Delta. Incremental on updated_at, upsert on PK.
+kind: ingest
+name: customers
+source:
+  type: postgres          # real: postgresql+psycopg2://... ; demo: sqlite stand-in
+  dsn_env: CRM_DSN
+  table: customers
+extract:
+  incremental_cursor: updated_at
+target:
+  table: customers
+  primary_key: customer_id
+  write_mode: merge
+transforms:
+  - normalize_columns
+  - trim_strings
+  - add_ingested_at

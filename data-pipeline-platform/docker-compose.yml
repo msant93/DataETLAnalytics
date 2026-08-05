@@ -1,0 +1,14 @@
+# Local container run. Mounts ./output so results land on the host, and injects
+# secrets from the host environment (never baked into the image).
+services:
+  pipeline:
+    build: .
+    environment:
+      APP_ENV: ${APP_ENV:-prod}
+      # Uncomment to target Postgres instead of DuckDB:
+      # PIPELINE__DESTINATION__TYPE: postgres
+      # PIPELINE__POSTGRES_DSN: ${PIPELINE__POSTGRES_DSN}
+    volumes:
+      - ./output:/app/output
+      - ./data:/app/data:ro
+    command: ["run"]
