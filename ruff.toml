@@ -7,6 +7,7 @@ select = ["E", "F", "W", "I", "UP", "B"]
 ignore = [
     "E501",  # line length handled by formatter, not worth failing CI over
     "B008",  # dlt uses function calls in argument defaults by design
+    "UP017", # keep timezone.utc (datetime.UTC is 3.11+-only) for portability
 ]
 
 [lint.per-file-ignores]
